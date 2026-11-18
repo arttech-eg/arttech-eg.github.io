@@ -111,6 +111,10 @@ const GANG = {
              suit: 0x2f5fb3, pants: 0x2f5fb3, accent: 0xffc400, shoe: 0x5a3a22, head: 'box', headColor: 0x2f5fb3, belly: 1.28, hoodie: false },
   pixel:   { name: 'بيكسل', agent: 'agent_7901m7dsk6seea5s43b2c6kya6zx', mind: './pixel.mind',
              suit: 0x16b3a3, pants: 0x34344a, accent: 0x8b5cf6, shoe: WHITE, head: 'ball', headColor: 0x16b3a3, belly: 0.95, hoodie: true },
+  uncle:   { name: 'عم رمضان', agent: '', mind: './uncle.mind',
+             suit: 0x4f8a5b, pants: 0x2f6b6e, accent: 0xd8442b, stripe: 0x2f6b6e, shoe: 0x5a3a22, head: 'human', headColor: 0xf1b08a,
+             hand: 0xf1b08a, cuff: 0x6b4226, belly: 1.38, hoodie: false, legR: 0.078, noLogo: true,
+             glb: './uncle.glb', lanternAt: [0.2, 0.3] },
 };
 const CH_ID = new URLSearchParams(location.search).get('c') in GANG ? new URLSearchParams(location.search).get('c') : 'labib';
 const CH = GANG[CH_ID];
@@ -129,11 +133,11 @@ sh.rotation.x = -Math.PI / 2; sh.scale.set(1, 0.55, 1); sh.position.y = 0.002; l
 const legs = [];
 for (const s of [-1, 1]) {
   const hip = new THREE.Group(); hip.position.set(0.085 * s * CH.belly, 0.3, 0); body.add(hip);
-  part(capsule(0.065, 0.16), CH.pants, hip, [0, -0.12, 0]);
-  part(new THREE.BoxGeometry(0.012, 0.2, 0.03), CH.accent, hip, [0.066 * s, -0.12, 0], [0, 0, 0], [1, 1, 1], false);
+  part(capsule(CH.legR ?? 0.065, 0.16), CH.pants, hip, [0, -0.12, 0]);
+  part(new THREE.BoxGeometry(0.012, 0.2, 0.03), CH.stripe ?? CH.accent, hip, [0.066 * s, -0.12, 0], [0, 0, 0], [1, 1, 1], false);
   const shoe = new THREE.Group(); shoe.position.set(0, -0.27, 0.03); hip.add(shoe);
   part(rbox(0.14, 0.085, 0.22, 0.04), CH.shoe, shoe);
-  part(rbox(0.145, 0.03, 0.225, 0.012), CH.accent, shoe, [0, -0.04, 0], [0, 0, 0], [1, 1, 1], false);
+  part(rbox(0.145, 0.03, 0.225, 0.012), CH.stripe ?? CH.accent, shoe, [0, -0.04, 0], [0, 0, 0], [1, 1, 1], false);
   part(rbox(0.09, 0.03, 0.08, 0.012), BLACK, shoe, [0, 0.04, 0.04], [0, 0, 0], [1, 1, 1], false);
   legs.push(hip);
 }
@@ -143,7 +147,16 @@ const torso = new THREE.Group(); torso.position.y = 0.33; body.add(torso);
 const trunk = new THREE.Group(); trunk.scale.set(CH.belly, 1, CH.belly); torso.add(trunk);
 part(rbox(0.36, 0.3, 0.24, 0.09), CH.suit, trunk, [0, 0.13, 0]);
 part(rbox(0.38, 0.05, 0.25, 0.025), CH.hoodie ? CH.suit : CH.accent, trunk, [0, 0.0, 0]);           // waistband / belt
-if (CH.hoodie) {
+if (CH_ID === 'uncle') {
+  // brown vest open over the green shirt, a red sash and a cream fur collar
+  const VEST = 0x6b4226, FUR = 0xf4efe4;
+  for (const s of [-1, 1]) part(rbox(0.13, 0.29, 0.255, 0.05), VEST, trunk, [0.12 * s, 0.13, 0]);
+  part(rbox(0.36, 0.29, 0.1, 0.04), VEST, trunk, [0, 0.13, -0.08]);
+  part(rbox(0.395, 0.065, 0.265, 0.03), CH.accent, trunk, [0, 0.03, 0]);
+  part(new THREE.TorusGeometry(0.13, 0.055, 12, 28), FUR, torso, [0, 0.29, 0], [Math.PI / 2, 0, 0], [CH.belly, 1, 1]);
+  for (const s of [-1, 1]) part(capsule(0.028, 0.15), FUR, torso, [0.075 * s, 0.16, 0.16 * CH.belly], [0.12, 0, 0.1 * s]);
+  for (let i = 0; i < 3; i++) part(new THREE.BoxGeometry(0.05, 0.008, 0.01), 0x3b2a1a, torso, [0, 0.22 - i * 0.04, 0.165], [0, 0, 0], [1, 1, 1], false);
+} else if (CH.hoodie) {
   part(new THREE.TorusGeometry(0.11, 0.045, 12, 28), CH.accent, torso, [0, 0.28, 0.02], [Math.PI / 2 - 0.25, 0, 0]); // hood lining
   for (const s of [-1, 1]) {                                                              // drawstrings
     part(new THREE.CylinderGeometry(0.008, 0.008, 0.09), CH.accent, torso, [0.035 * s, 0.2, 0.125 * CH.belly], [0, 0, 0], [1, 1, 1], false);
@@ -154,7 +167,7 @@ if (CH.hoodie) {
   for (const s of [-1, 1])                                                                // overall straps
     part(new THREE.BoxGeometry(0.035, 0.26, 0.01), CH.accent, torso, [0.09 * s, 0.13, 0.123 * CH.belly], [0, 0, 0], [1, 1, 1], false);
 }
-const chestLogo = decal(logoTexture(), 0.14, 0.07); chestLogo.position.set(0, 0.1, 0.124 * CH.belly); torso.add(chestLogo);
+if (!CH.noLogo) { const chestLogo = decal(logoTexture(), 0.14, 0.07); chestLogo.position.set(0, 0.1, 0.124 * CH.belly); torso.add(chestLogo); }
 const backWord = decal(logoTexture(true), 0.2, 0.1); backWord.position.set(0, 0.16, -0.124 * CH.belly); backWord.rotation.y = Math.PI; torso.add(backWord);
 
 // arms
@@ -162,17 +175,19 @@ const arms = [];
 for (const s of [-1, 1]) {
   const sh = new THREE.Group(); sh.position.set(0.2 * s * CH.belly, 0.24, 0); torso.add(sh);
   part(capsule(0.05, 0.12), CH.suit, sh, [0, -0.09, 0]);
-  part(new THREE.CylinderGeometry(0.053, 0.053, 0.025, 16), CH.accent, sh, [0, -0.17, 0], [0, 0, 0], [1, 1, 1], false);
-  part(new THREE.SphereGeometry(0.052, 16, 12), WHITE, sh, [0, -0.215, 0]);
+  part(new THREE.CylinderGeometry(0.053, 0.053, 0.025, 16), CH.cuff ?? CH.accent, sh, [0, -0.17, 0], [0, 0, 0], [1, 1, 1], false);
+  part(new THREE.SphereGeometry(0.052, 16, 12), CH.hand ?? WHITE, sh, [0, -0.215, 0]);
   sh.rotation.z = 0.18 * s;
   arms.push(sh);
 }
 
 // head
 const head = new THREE.Group(); torso.add(head); head.position.y = 0.52;
-if (CH.head === 'ball') part(new THREE.SphereGeometry(0.31, 32, 24), CH.headColor, head, [0, 0, 0], [0, 0, 0], [1, 0.88, 0.78]);
+const HUMAN = CH.head === 'human', HEAD_R = 0.25, HEAD_Z = 0.88;
+if (HUMAN) part(new THREE.SphereGeometry(HEAD_R, 32, 24), CH.headColor, head, [0, 0, 0], [0, 0, 0], [1.05, 0.95, HEAD_Z]);
+else if (CH.head === 'ball') part(new THREE.SphereGeometry(0.31, 32, 24), CH.headColor, head, [0, 0, 0], [0, 0, 0], [1, 0.88, 0.78]);
 else part(rbox(0.6, 0.5, 0.5, 0.17), CH.headColor, head);
-const screen = part(rbox(0.5, 0.3, 0.06, 0.05), WHITE, head, [0, -0.04, CH.head === 'ball' ? 0.245 : 0.235]);   // face screen
+const screen = part(rbox(0.5, 0.3, 0.06, 0.05), HUMAN ? CH.headColor : WHITE, head, [0, -0.04, CH.head === 'ball' ? 0.245 : 0.235]);   // face screen
 
 if (CH_ID === 'labib') {
   for (const s of [-1, 1]) {
@@ -205,6 +220,15 @@ if (CH_ID === 'mesmar') {
   part(new THREE.CylinderGeometry(0.36, 0.36, 0.025, 32), 0xffc400, hat, [0, 0.02, 0.03]);
   part(new THREE.BoxGeometry(0.04, 0.16, 0.5), 0xe0a800, hat, [0, 0.1, 0], [0, 0, 0], [1, 1, 0.98], false);
   part(new THREE.CylinderGeometry(0.012, 0.012, 0.2), 0xd98b2b, head, [0.3, 0.02, 0.05], [0.3, 0, 0.2]);              // pencil
+}
+if (HUMAN) screen.visible = false;
+if (CH_ID === 'uncle') {
+  // red fez with a white fur band and a green gem, plus nose and ears
+  part(new THREE.CylinderGeometry(0.15, 0.175, 0.17, 32), 0xb3121a, head, [0, 0.22, -0.01], [-0.08, 0, 0]);
+  part(new THREE.CylinderGeometry(0.19, 0.19, 0.075, 32), 0xf4efe4, head, [0, 0.15, 0], [-0.08, 0, 0]);
+  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03), toon(0x1f8a4c)); gem.position.set(0, 0.155, 0.19); gem.scale.set(1, 1.3, 0.5); head.add(gem);
+  part(new THREE.SphereGeometry(0.05, 20, 16), 0xf09a78, head, [0, -0.03, HEAD_R * HEAD_Z + 0.015], [0, 0, 0], [1.1, 0.9, 0.9]);
+  for (const s of [-1, 1]) part(new THREE.SphereGeometry(0.05, 14, 10), CH.headColor, head, [0.255 * s, -0.01, 0], [0, 0, 0], [0.5, 1, 0.8]);
 }
 if (CH_ID === 'pixel') {
   // purple beret with a stem
@@ -241,7 +265,7 @@ if (RAMADAN) {
 }
 
 // face: eyes with lids, mouth
-const face = new THREE.Group(); face.position.set(0, -0.04, CH.head === 'ball' ? 0.278 : 0.268); head.add(face);
+const face = new THREE.Group(); face.position.set(0, HUMAN ? 0.025 : -0.04, HUMAN ? 0 : CH.head === 'ball' ? 0.278 : 0.268); head.add(face);
 const ink = new THREE.MeshBasicMaterial({ color: 0x0b0b0b });
 const lidMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 const eyes = [], lids = [];
@@ -262,6 +286,10 @@ if (CH_ID === 'mesmar') {                       // big old-master mustache
 }
 if (CH_ID === 'sharara') {                      // rosy cheeks
   for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.CircleGeometry(0.03, 20), new THREE.MeshBasicMaterial({ color: 0xff8fa3 })); c.position.set(0.17 * s, -0.06, 0.003); face.add(c); }
+}
+if (CH_ID === 'uncle') {                        // big rosy cheeks
+  for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.CircleGeometry(0.045, 20), new THREE.MeshBasicMaterial({ color: 0xff8f86 })); c.position.set(0.15 * s, -0.1, 0.003); face.add(c); }
+  mouth.position.y = -0.17;
 }
 if (CH_ID === 'pixel') {                        // round designer glasses
   for (const s of [-1, 1]) { const g = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.01, 8, 32), ink); g.position.set(0.105 * s, 0.01, 0.005); face.add(g); }
@@ -286,13 +314,72 @@ kit.glasses = new THREE.Group(); face.add(kit.glasses); kit.glasses.position.z =
 for (const s of [-1, 1]) { const g = new THREE.Mesh(rbox(0.13, 0.075, 0.01, 0.025), ink); g.position.set(0.1 * s, 0.015, 0); kit.glasses.add(g); }
 { const bridge = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.015), ink); bridge.position.y = 0.03; kit.glasses.add(bridge); }
 const screenMat = screen.material = screen.material.clone();
-const SCREEN_WHITE = new THREE.Color(WHITE), SCREEN_ANGRY = new THREE.Color(0xff8a80);
+if (HUMAN) {                                     // shrink the face and wrap each flat piece onto the round head
+  face.scale.setScalar(0.72);
+  kit.smile.position.y = kit.frown.position.y = -0.17;
+  for (const c of face.children) {
+    const x = c.position.x * 0.72, y = c.position.y * 0.72 + 0.025;
+    const zx = 1 - (x / (HEAD_R * 1.05)) ** 2 - (y / (HEAD_R * 0.95)) ** 2;
+    const zs = Math.sqrt(Math.max(zx, 0.05)) * HEAD_R * HEAD_Z;
+    c.position.z = (zs + 0.006) / 0.72 + c.position.z;
+    c.rotation.y = Math.atan2(x, zs) * 0.7; c.rotation.x = -Math.atan2(y, zs) * 0.7;
+  }
+}
+const SCREEN_WHITE = new THREE.Color(HUMAN ? CH.headColor : WHITE), SCREEN_ANGRY = new THREE.Color(0xff8a80);
 
 // smoke puffs for when he gets mad
 const puffs = [];
 const puffMat = new THREE.MeshToonMaterial({ color: 0x5a5a5a, gradientMap: ramp, transparent: true });
 for (let i = 0; i < 14; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), puffMat.clone()); p.visible = false; head.add(p); puffs.push({ m: p, age: 9 }); }
 let puffClock = 0;
+
+// ---------- picture characters: the original artwork stands on the card and always faces you ----------
+let sprite = null, spriteRig = null, spriteGlow = null;
+if (CH.sprite) {
+  body.visible = false;
+  const h = 1.05, w = h * CH.spriteAspect;
+  const tex = new THREE.TextureLoader().load(CH.sprite); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const geo = new THREE.PlaneGeometry(w, h); geo.translate(0, h / 2, 0);
+  sprite = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }));
+  spriteRig = new THREE.Group(); labib.add(spriteRig); spriteRig.add(sprite);
+  const gc = document.createElement('canvas'); gc.width = gc.height = 64;
+  const gg = gc.getContext('2d'), grad = gg.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,200,90,0.9)'); grad.addColorStop(1, 'rgba(255,150,40,0)'); gg.fillStyle = grad; gg.fillRect(0, 0, 64, 64);
+  spriteGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.32), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  spriteGlow.position.set((CH.lanternAt[0] - 0.5) * w, CH.lanternAt[1] * h, 0.01); sprite.add(spriteGlow);
+  const smokeRoot = new THREE.Group(); smokeRoot.position.y = h * 0.62; sprite.add(smokeRoot);
+  for (const p of puffs) smokeRoot.add(p.m);
+}
+const spriteCam = new THREE.Vector3();
+
+// ---------- 3D model characters: a GLB generated from the artwork, animated as a whole ----------
+let model = null, modelRig = null, modelGlow = null, envMap = null;
+const modelMats = [], MODEL_ANGRY = new THREE.Color(1, 0.55, 0.5);
+if (CH.glb) {
+  body.visible = false;
+  modelRig = new THREE.Group(); labib.add(modelRig);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'), import('three/addons/environments/RoomEnvironment.js')]).then(([{ GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }]) => {
+  const pmrem = new THREE.PMREMGenerator(renderer); envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environment = envMap;
+  const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+  loader.load(CH.glb, g => {
+    const root = g.scene, box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+    const k = 1.05 / size.y;
+    root.scale.setScalar(k); root.position.set(-c.x * k, -box.min.y * k, -c.z * k);
+    root.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.userData.base = o.material.color.clone(); modelMats.push(o.material); } });
+    const pivot = new THREE.Group(); pivot.rotation.y = CH.glbTurn ?? 0; pivot.add(root);
+    model = new THREE.Group(); model.add(pivot); modelRig.add(model);
+    const gc = document.createElement('canvas'); gc.width = gc.height = 64;
+    const gg = gc.getContext('2d'), grad = gg.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,200,90,0.9)'); grad.addColorStop(1, 'rgba(255,150,40,0)'); gg.fillStyle = grad; gg.fillRect(0, 0, 64, 64);
+    modelGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gc), blending: THREE.AdditiveBlending, depthWrite: false }));
+    modelGlow.scale.setScalar(0.3);
+    modelGlow.position.set((CH.lanternAt[0] - 0.5) * size.x * k, CH.lanternAt[1] * 1.05, size.z * k * 0.35); model.add(modelGlow);
+    const smokeRoot = new THREE.Group(); smokeRoot.position.y = 0.65; model.add(smokeRoot);
+    for (const p of puffs) smokeRoot.add(p.m);
+  });
+  });
+}
 function emitSmoke(dt) {
   puffClock -= dt;
   if (puffClock <= 0) {
@@ -450,6 +537,27 @@ function frame() {
   // thinking: hand to chin; laughing: shake
   if (m === 'thinking' && !walking) { arms[1].rotation.z = -0.6; arms[1].rotation.x = -1.9; head.rotation.z += 0.15; }
   if (m === 'laugh') body.position.y += Math.abs(Math.sin(t * 14)) * 0.015;
+  if (model) {                                 // breathe, bob, sway while talking, squash when poked, fume when angry
+    modelRig.position.set(angry ? Math.sin(t * 60) * 0.01 : 0, body.position.y, 0);
+    model.rotation.z = body.rotation.z + Math.sin(t * 7) * talk * 0.05 + (m === 'laugh' ? Math.sin(t * 14) * 0.03 : 0);
+    model.rotation.y = Math.sin(t * 0.6) * 0.1 * (1 - walking);
+    model.scale.set(1 + poke * 0.1, 1 + Math.sin(t * 2.2) * 0.012 + talk * 0.035 - poke * 0.12, 1 + poke * 0.1);
+    for (const mt of modelMats) mt.color.lerp(angry ? MODEL_ANGRY : mt.userData.base, 0.1);
+    if (modelGlow) modelGlow.material.opacity = 0.55 + Math.sin(t * 13) * 0.12 + Math.sin(t * 7.3) * 0.1;
+  }
+  if (sprite) {                                // the picture breathes, bobs, sways while talking and turns to face you
+    if (onCard) { stage.updateMatrixWorld(); spriteCam.copy(arCam.position); stage.worldToLocal(spriteCam); } else spriteCam.copy(camera.position);
+    spriteRig.rotation.y = Math.atan2(spriteCam.x - labib.position.x, spriteCam.z - labib.position.z) - labib.rotation.y;
+    const flat = Math.hypot(spriteCam.x - labib.position.x, spriteCam.z - labib.position.z);
+    spriteRig.rotation.order = 'YXZ';
+    spriteRig.rotation.x = -Math.min(1.25, Math.max(0, Math.atan2(spriteCam.y - labib.position.y - 0.5 * labib.scale.y, flat)));   // lean back to face a camera above
+    spriteRig.position.set(angry ? Math.sin(t * 60) * 0.01 : 0, body.position.y, 0);
+    sprite.rotation.z = body.rotation.z + Math.sin(t * 7) * talk * 0.05 + (m === 'laugh' ? Math.sin(t * 14) * 0.03 : 0);
+    sprite.scale.set(1 + poke * 0.1, 1 + Math.sin(t * 2.2) * 0.012 + talk * 0.035 - poke * 0.12, 1);
+    sprite.material.color.lerp(angry ? SCREEN_ANGRY : SCREEN_WHITE.set(WHITE), 0.1);
+    spriteGlow.material.opacity = 0.55 + Math.sin(t * 13) * 0.12 + Math.sin(t * 7.3) * 0.1;
+    if (RAMADAN) ramadan.moon.visible = true;
+  }
   // poke squash
   poke = Math.max(0, poke - dt * 4);
   body.scale.set(1 + poke * 0.12, 1 - poke * 0.15, 1 + poke * 0.12);
@@ -484,6 +592,7 @@ async function startCard() {
   const mind = new MindARThree({ container: $('ar'), imageTargetSrc: CH.mind, uiScanning: 'no', uiLoading: 'no', filterMinCF: 0.0001, filterBeta: 0.001 });
   const anchor = mind.addAnchor(0);
   mind.scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8078, 1.6));
+  if (CH.glb) { mind.scene.add(new THREE.AmbientLight(0xffffff, 0.5)); mind.scene.environment = envMap; }
   const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(1, 2, 3); mind.scene.add(sun);
   labib.position.set(0, 0, 0); labib.rotation.y = 0;
   stage.add(labib); anchor.group.add(stage);
@@ -503,6 +612,7 @@ async function startCard() {
 
 async function startTalk() {
   if (conv) return;
+  if (!CH.agent) { statusEl.textContent = `${CH.name} لسه بيتعلم الكلام… قريب هيكلمك`; return; }
   statusEl.textContent = 'جاري الاتصال…';
   try {
     const { Conversation } = await import('https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.31.0/+esm');
